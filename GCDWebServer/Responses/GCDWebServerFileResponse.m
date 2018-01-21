@@ -35,14 +35,16 @@
 
 #define kFileReadBufferSize (32 * 1024)
 
-@implementation GCDWebServerFileResponse {
+@interface GCDWebServerFileResponse () {
+@private
   NSString* _path;
   NSUInteger _offset;
   NSUInteger _size;
   int _file;
 }
+@end
 
-@dynamic contentType, lastModifiedDate, eTag;
+@implementation GCDWebServerFileResponse
 
 + (instancetype)responseWithFile:(NSString*)path {
   return [[[self class] alloc] initWithFile:path];
@@ -57,26 +59,26 @@
 }
 
 + (instancetype)responseWithFile:(NSString*)path byteRange:(NSRange)range isAttachment:(BOOL)attachment {
-  return [[[self class] alloc] initWithFile:path byteRange:range isAttachment:attachment mimeTypeOverrides:nil];
+  return [[[self class] alloc] initWithFile:path byteRange:range isAttachment:attachment];
 }
 
 - (instancetype)initWithFile:(NSString*)path {
-  return [self initWithFile:path byteRange:NSMakeRange(NSUIntegerMax, 0) isAttachment:NO mimeTypeOverrides:nil];
+  return [self initWithFile:path byteRange:NSMakeRange(NSUIntegerMax, 0) isAttachment:NO];
 }
 
 - (instancetype)initWithFile:(NSString*)path isAttachment:(BOOL)attachment {
-  return [self initWithFile:path byteRange:NSMakeRange(NSUIntegerMax, 0) isAttachment:attachment mimeTypeOverrides:nil];
+  return [self initWithFile:path byteRange:NSMakeRange(NSUIntegerMax, 0) isAttachment:attachment];
 }
 
 - (instancetype)initWithFile:(NSString*)path byteRange:(NSRange)range {
-  return [self initWithFile:path byteRange:range isAttachment:NO mimeTypeOverrides:nil];
+  return [self initWithFile:path byteRange:range isAttachment:NO];
 }
 
 static inline NSDate* _NSDateFromTimeSpec(const struct timespec* t) {
   return [NSDate dateWithTimeIntervalSince1970:((NSTimeInterval)t->tv_sec + (NSTimeInterval)t->tv_nsec / 1000000000.0)];
 }
 
-- (instancetype)initWithFile:(NSString*)path byteRange:(NSRange)range isAttachment:(BOOL)attachment mimeTypeOverrides:(NSDictionary*)overrides {
+- (instancetype)initWithFile:(NSString*)path byteRange:(NSRange)range isAttachment:(BOOL)attachment {
   struct stat info;
   if (lstat([path fileSystemRepresentation], &info) || !(info.st_mode & S_IFREG)) {
     GWS_DNOT_REACHED();
@@ -89,7 +91,7 @@ static inline NSDate* _NSDateFromTimeSpec(const struct timespec* t) {
   }
 #endif
   NSUInteger fileSize = (NSUInteger)info.st_size;
-
+  
   BOOL hasByteRange = GCDWebServerIsValidByteRange(range);
   if (hasByteRange) {
     if (range.location != NSUIntegerMax) {
@@ -106,7 +108,7 @@ static inline NSDate* _NSDateFromTimeSpec(const struct timespec* t) {
     range.location = 0;
     range.length = fileSize;
   }
-
+  
   if ((self = [super init])) {
     _path = [path copy];
     _offset = range.location;
@@ -116,7 +118,7 @@ static inline NSDate* _NSDateFromTimeSpec(const struct timespec* t) {
       [self setValue:[NSString stringWithFormat:@"bytes %lu-%lu/%lu", (unsigned long)_offset, (unsigned long)(_offset + _size - 1), (unsigned long)fileSize] forAdditionalHeader:@"Content-Range"];
       GWS_LOG_DEBUG(@"Using content bytes range [%lu-%lu] for file \"%@\"", (unsigned long)_offset, (unsigned long)(_offset + _size - 1), path);
     }
-
+    
     if (attachment) {
       NSString* fileName = [path lastPathComponent];
       NSData* data = [[fileName stringByReplacingOccurrencesOfString:@"\"" withString:@""] dataUsingEncoding:NSISOLatin1StringEncoding allowLossyConversion:YES];
@@ -128,8 +130,8 @@ static inline NSDate* _NSDateFromTimeSpec(const struct timespec* t) {
         GWS_DNOT_REACHED();
       }
     }
-
-    self.contentType = GCDWebServerGetMimeTypeForExtension([_path pathExtension], overrides);
+    
+    self.contentType = GCDWebServerGetMimeTypeForExtension([_path pathExtension]);
     self.contentLength = _size;
     self.lastModifiedDate = _NSDateFromTimeSpec(&info.st_mtimespec);
     self.eTag = [NSString stringWithFormat:@"%llu/%li/%li", info.st_ino, info.st_mtimespec.tv_sec, info.st_mtimespec.tv_nsec];

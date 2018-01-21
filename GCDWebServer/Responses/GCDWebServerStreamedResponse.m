@@ -31,11 +31,13 @@
 
 #import "GCDWebServerPrivate.h"
 
-@implementation GCDWebServerStreamedResponse {
+@interface GCDWebServerStreamedResponse () {
+@private
   GCDWebServerAsyncStreamBlock _block;
 }
+@end
 
-@dynamic contentType;
+@implementation GCDWebServerStreamedResponse
 
 + (instancetype)responseWithContentType:(NSString*)type streamBlock:(GCDWebServerStreamBlock)block {
   return [[[self class] alloc] initWithContentType:type streamBlock:block];
@@ -46,20 +48,19 @@
 }
 
 - (instancetype)initWithContentType:(NSString*)type streamBlock:(GCDWebServerStreamBlock)block {
-  return [self initWithContentType:type
-                  asyncStreamBlock:^(GCDWebServerBodyReaderCompletionBlock completionBlock) {
-
-                    NSError* error = nil;
-                    NSData* data = block(&error);
-                    completionBlock(data, error);
-
-                  }];
+  return [self initWithContentType:type asyncStreamBlock:^(GCDWebServerBodyReaderCompletionBlock completionBlock) {
+    
+    NSError* error = nil;
+    NSData* data = block(&error);
+    completionBlock(data, error);
+    
+  }];
 }
 
 - (instancetype)initWithContentType:(NSString*)type asyncStreamBlock:(GCDWebServerAsyncStreamBlock)block {
   if ((self = [super init])) {
     _block = [block copy];
-
+    
     self.contentType = type;
   }
   return self;

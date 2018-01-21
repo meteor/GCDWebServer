@@ -31,14 +31,18 @@
 
 #import "GCDWebServerPrivate.h"
 
-@interface GCDWebServerDataRequest ()
-@property(nonatomic) NSMutableData* data;
-@end
-
-@implementation GCDWebServerDataRequest {
+@interface GCDWebServerDataRequest () {
+@private
+  NSMutableData* _data;
+  
   NSString* _text;
   id _jsonObject;
 }
+@end
+
+@implementation GCDWebServerDataRequest
+
+@synthesize data=_data;
 
 - (BOOL)open:(NSError**)error {
   if (self.contentLength != NSUIntegerMax) {
@@ -48,7 +52,7 @@
   }
   if (_data == nil) {
     if (error) {
-      *error = [NSError errorWithDomain:kGCDWebServerErrorDomain code:-1 userInfo:@{ NSLocalizedDescriptionKey : @"Failed allocating memory" }];
+      *error = [NSError errorWithDomain:kGCDWebServerErrorDomain code:-1 userInfo:@{NSLocalizedDescriptionKey: @"Failed allocating memory"}];
     }
     return NO;
   }
@@ -68,7 +72,7 @@
   NSMutableString* description = [NSMutableString stringWithString:[super description]];
   if (_data) {
     [description appendString:@"\n\n"];
-    [description appendString:GCDWebServerDescribeData(_data, (NSString*)self.contentType)];
+    [description appendString:GCDWebServerDescribeData(_data, self.contentType)];
   }
   return description;
 }
