@@ -27,8 +27,6 @@
 
 #import "GCDWebServer.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 @class GCDWebDAVServer;
 
 /**
@@ -88,7 +86,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  *  Sets the delegate for the server.
  */
-@property(nonatomic, weak, nullable) id<GCDWebDAVServerDelegate> delegate;
+@property(nonatomic, assign) id<GCDWebDAVServerDelegate> delegate;
 
 /**
  *  Sets which files are allowed to be operated on depending on their extension.
@@ -156,5 +154,3 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)shouldCreateDirectoryAtPath:(NSString*)path;
 
 @end
-
-NS_ASSUME_NONNULL_END
